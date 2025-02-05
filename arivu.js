@@ -1,57 +1,12 @@
-import fetch from 'node-fetch'; // Import for Node.js
+import express from 'express';
+import fetch from 'node-fetch';
 import nodemailer from 'nodemailer';
 
+const app = express();
+const port = process.env.PORT || 3000;
+
 const websites = [
-    "https://autan.co/es-co",
-    "https://www.offdefense.com.co/es-co",
-    "https://offuruguay.com.uy/es-uy",
-    "https://linhaoff.com.br/pt-br",
-    "https://off.com/es-us",
-    "https://off.com.ph/en-ph",
-    "https://autan.com.ro/ro-ro",
-    "https://www.off.ca/en-ca",
-    "https://off.com.ar/es-ar",
-    "https://www.off.com.gt",
-    "https://www.autandefense.de/de-de",
-    "https://www.off.com.sv",
-    "https://autan.fr/fr-fr",
-    "https://ziploc.com.ph",
-    "https://off.com.pl/pl-pl",
-    "https://www.off.cr",
-    "https://www.off.com.pa",
-    "https://off.co.th/th-th",
-    "https://off.hn/es",
-    "https://www.off.com.pe",
-    "https://autan.id/id-id",
-    "https://ziploc.cl",
-    "https://www.off.ca/fr-ca",
-    "https://offmexico.com.mx/es-mx",
-    "https://www.autandefense.gr/el-gr",
-    "https://ziploc.ca/en",
-    "https://autan.com.es/es-es",
-    "https://www.off.hn",
-    "https://autan.it/it-it",
-    "https://off.co.th/en-th",
-    "https://www.off.com.ec",
-    "https://ziploc.com.br/",
-    "https://www.autandefense.es",
-    "https://ziploc.com.sg",
-    "https://offcolombia.com.co/es-co",
-    "https://off.com/en",
-    "https://autan.de/de-de",
-    "https://www.autandefense.fr/fr-fr",
-    "https://ziploc.com.ar/es-AR",
-    "https://autan.hr/hr-hr",
-    "https://www.autan.gr/el-gr",
-    "https://www.off.com.ni",
-    "https://www.offaustralia.com.au",
-    "https://ziploc.com.au",
-    "https://ziploc.com/en",
-    "https://ziploc.com.my",
-    "https://ziploc.com/es-US",
-    "https://ziplocmexico.com.mx",
-    "https://www.autandefense.it/it-it",
-    "https://ziploc.ca/fr-ca"
+    // Your website list here
 ];
 
 const emailConfig = {
@@ -99,4 +54,19 @@ async function checkWebsitesStatus(urls) {
     }
 }
 
+app.get('/', (req, res) => {
+    res.send('Welcome to the Website Monitoring Service');
+});
+
+app.get('/check-websites', async (req, res) => {
+    console.log('Manual check requested...');
+    await checkWebsitesStatus(websites);
+    res.send('Website status check completed!');
+});
+
+// Start the background process of checking websites every minute
 setInterval(() => checkWebsitesStatus(websites), 60000); // Check every 1 minute
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
