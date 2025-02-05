@@ -72,25 +72,31 @@ async function sendEmail(subject, message) {
         subject: subject,
         text: message
     });
+    console.log(`Email sent to ${recipientEmail} with subject: "${subject}"`);
 }
 
 async function checkWebsitesStatus(urls) {
+    console.log('Starting website status check...');
     const results = await Promise.all(urls.map(async (url) => {
         try {
             const response = await fetch(url, { method: 'GET' });
-            return { url, status: response.ok ? 'Online' : 'Offline', statusCode: response.status };
+            const status = response.ok ? 'Online' : 'Offline';
+            console.log(`${url} is ${status} (Status Code: ${response.status})`);
+            return { url, status, statusCode: response.status };
         } catch (error) {
+            console.log(`${url} is Offline. Error: ${error.message}`);
             return { url, status: 'Offline', error: error.message };
         }
     }));
 
-    console.log(results);
+    console.log('Website status check completed. Results:', results);
     
     const offlineSites = results.filter(site => site.status === 'Offline');
     if (offlineSites.length > 0) {
         const message = offlineSites.map(site => `${site.url} is Offline`).join('\n');
+        console.log('Offline websites found. Sending email alert...');
         await sendEmail('Website Down Alert', message);
     }
 }
 
-setInterval(() => checkWebsitesStatus(websites), 60000);
+setInterval(() => checkWebsitesStatus(websites), 60000); // Check every 1 minute
