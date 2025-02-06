@@ -1,5 +1,9 @@
+import express from 'express';
 import fetch from 'node-fetch';
 import nodemailer from 'nodemailer';
+
+const app = express();
+const port = process.env.PORT || 3000;
 
 const websites = [
     "https://autan.co/es-co",
@@ -77,37 +81,41 @@ async function sendEmail(subject, message) {
 
 async function checkWebsitesStatus(urls) {
     console.log('Starting website status check...');
-    const results = await Promise.all(
-        urls.map(async (url) => {
-            try {
-                const response = await fetch(url, { method: 'GET' });
-                const status = response.ok ? 'Online' : 'Offline';
-                console.log(`${url} is ${status} (Status Code: ${response.status})`);
-                return { url, status, statusCode: response.status };
-            } catch (error) {
-                console.log(`${url} is Offline. Error: ${error.message}`);
-                return { url, status: 'Offline', error: error.message };
-            }
-        })
-    );
+    const results = await Promise.all(urls.map(async (url) => {
+        try {
+            const response = await fetch(url, { method: 'GET' });
+            const status = response.ok ? 'Online' : 'Offline';
+            console.log(`${url} is ${status} (Status Code: ${response.status})`);
+            return { url, status, statusCode: response.status };
+        } catch (error) {
+            console.log(`${url} is Offline. Error: ${error.message}`);
+            return { url, status: 'Offline', error: error.message };
+        }
+    }));
 
     console.log('Website status check completed. Results:', results);
-
-    const offlineSites = results.filter((site) => site.status === 'Offline');
+    
+    const offlineSites = results.filter(site => site.status === 'Offline');
     if (offlineSites.length > 0) {
-        const message = offlineSites.map((site) => `${site.url} is Offline`).join('\n');
+        const message = offlineSites.map(site => `${site.url} is Offline`).join('\n');
         console.log('Offline websites found. Sending email alert...');
         await sendEmail('Website Down Alert', message);
     }
 }
 
-export default async function handler(req, res) {
-    // Manually trigger website check on request
-    if (req.method === 'GET') {
-        console.log('Manual check requested...');
-        await checkWebsitesStatus(websites);
-        res.status(200).send('Website status check completed!');
-    } else {
-        res.status(404).send('Not Found');
-    }
-}
+app.get('/', (req, res) => {
+    res.send('Welcome to the Website Monitoring Service');
+});
+
+app.get('/check-websites', async (req, res) => {
+    console.log('Manual check requested...');
+    await checkWebsitesStatus(websites);
+    res.send('Website status check completed!');
+});
+
+// Start the background process of checking websites every minute
+setInterval(() => checkWebsitesStatus(websites), 60000); // Check every 1 minute
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
